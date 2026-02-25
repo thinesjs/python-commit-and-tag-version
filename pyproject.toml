@@ -26,6 +26,10 @@ dev = [
 [project.scripts]
 commit-and-tag-version = "commit_and_tag_version.cli:main"
 
+[tool.commit-and-tag-version]
+packageFiles = ["pyproject.toml"]
+bumpFiles = ["pyproject.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
