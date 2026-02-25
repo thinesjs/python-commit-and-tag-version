@@ -68,6 +68,13 @@ jobs:
       - name: Push release
         run: git push --follow-tags origin ${{ github.ref_name }}
 
+      - name: Merge back to develop
+        run: |
+          git fetch origin develop
+          git checkout develop
+          git merge --no-ff ${{ github.ref_name }} -m "chore: merge ${{ github.ref_name }} into develop"
+          git push origin develop
+
   publish:
     needs: release
     runs-on: ubuntu-latest
