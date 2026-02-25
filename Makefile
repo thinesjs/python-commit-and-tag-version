@@ -1,4 +1,4 @@
-.PHONY: install install-dev test test-unit test-integration lint format check clean build
+.PHONY: install install-dev test test-unit test-integration lint format check clean build release
 
 install:
 	pip install -e .
@@ -31,4 +31,7 @@ clean:
 	find . -type f -name "*.pyc" -delete
 
 build: clean
-	python -m build
+	python3 -m build
+
+release: build
+	twine upload dist/*
