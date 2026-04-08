@@ -290,6 +290,87 @@ class TestBump:
             mock_tags.return_value = []
             assert bump(config, "1.0.0-rc.0") == "1.0.0"
 
+    def test_build_metadata_preserved_on_patch_bump(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["fix: bug"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0+build.42") == "1.0.1+build.42"
+
+    def test_build_metadata_preserved_on_minor_bump(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["feat: feature"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0+build.42") == "1.1.0+build.42"
+
+    def test_build_metadata_preserved_on_major_bump(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["feat!: breaking"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0+build.42") == "2.0.0+build.42"
+
+    def test_build_metadata_preserved_on_finalize_prerelease(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["fix: bug"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0+build.42") == "1.0.0+build.42"
+
+    def test_build_metadata_preserved_on_finalize_with_escalation(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "major"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.2.0-rc.0+build.42") == "2.0.0+build.42"
+
+    def test_build_metadata_preserved_on_premajor(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "major"
+        config.prerelease = "rc"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "0.0.1-rc.15+build.42") == "1.0.0-rc.0+build.42"
+
+    def test_build_metadata_preserved_on_prerelease_continue(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.prerelease = "rc"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["feat!: breaking"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0+build.42") == "1.0.0-rc.1+build.42"
+
     def test_updates_bump_files(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         config = self._setup_config(tmp_path)

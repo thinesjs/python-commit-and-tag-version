@@ -65,28 +65,35 @@ def _get_release_type(prerelease: str | None, expected_type: str, current_versio
 def _increment_version(
     v: semver.Version, release_type: str, prerelease_id: str | None
 ) -> semver.Version:
+    build = v.build
     match release_type:
         case "major":
             if v.minor != 0 or v.patch != 0 or v.prerelease is None:
-                return v.bump_major()
-            return semver.Version(v.major, 0, 0)
+                return v.bump_major().replace(build=build)
+            return semver.Version(v.major, 0, 0, build=build)
         case "minor":
             if v.patch != 0 or v.prerelease is None:
-                return v.bump_minor()
-            return semver.Version(v.major, v.minor, 0)
+                return v.bump_minor().replace(build=build)
+            return semver.Version(v.major, v.minor, 0, build=build)
         case "patch":
             if v.prerelease is None:
-                return v.bump_patch()
-            return semver.Version(v.major, v.minor, v.patch)
+                return v.bump_patch().replace(build=build)
+            return semver.Version(v.major, v.minor, v.patch, build=build)
         case "premajor":
             bumped = v.bump_major()
-            return semver.Version(bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0")
+            return semver.Version(
+                bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0", build
+            )
         case "preminor":
             bumped = v.bump_minor()
-            return semver.Version(bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0")
+            return semver.Version(
+                bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0", build
+            )
         case "prepatch":
             bumped = v.bump_patch()
-            return semver.Version(bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0")
+            return semver.Version(
+                bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0", build
+            )
         case "prerelease":
             if v.prerelease is not None:
                 parts = v.prerelease.split(".")
@@ -95,11 +102,13 @@ def _increment_version(
                     new_pre = ".".join(parts[:-1]) + f".{num}"
                 else:
                     new_pre = f"{v.prerelease}.1"
-                return semver.Version(v.major, v.minor, v.patch, new_pre)
+                return semver.Version(v.major, v.minor, v.patch, new_pre, build)
             bumped = v.bump_patch()
-            return semver.Version(bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0")
+            return semver.Version(
+                bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0", build
+            )
         case _:
-            return v.bump_patch()
+            return v.bump_patch().replace(build=build)
 
 
 def _resolve_unique_prerelease_version(
