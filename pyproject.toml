@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "commit-and-tag-version"
-version = "0.0.4"
+version = "1.0.0"
 description = "A utility for versioning using semver and CHANGELOG generation powered by Conventional Commits"
 readme = "README.md"
 license = "MIT"
