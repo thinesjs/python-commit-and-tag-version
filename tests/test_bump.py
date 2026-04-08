@@ -189,6 +189,107 @@ class TestBump:
             mock_tags.return_value = []
             assert bump(config, "1.2.0-rc.0") == "2.0.0-rc.0"
 
+    def test_finalize_prerelease_auto_patch_drops_prerelease(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["fix: small"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0") == "1.0.0"
+
+    def test_finalize_prerelease_auto_minor_drops_prerelease(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["feat: feature"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0") == "1.0.0"
+
+    def test_finalize_prerelease_auto_major_drops_prerelease(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = ["feat!: breaking"]
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0") == "1.0.0"
+
+    def test_finalize_prerelease_release_as_patch_drops_prerelease(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "patch"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.2.3-rc.0") == "1.2.3"
+
+    def test_finalize_prerelease_release_as_minor_escalates_when_patch_nonzero(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "minor"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.2.3-rc.0") == "1.3.0"
+
+    def test_finalize_prerelease_release_as_minor_drops_prerelease_when_patch_zero(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "minor"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.2.0-rc.0") == "1.2.0"
+
+    def test_finalize_prerelease_release_as_major_escalates_when_minor_nonzero(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "major"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.2.0-rc.0") == "2.0.0"
+
+    def test_finalize_prerelease_release_as_major_drops_prerelease_when_minor_patch_zero(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        config = self._setup_config(tmp_path)
+        config.release_as = "major"
+        with (
+            patch("commit_and_tag_version.lifecycles.bump.git_log_raw") as mock_log,
+            patch("commit_and_tag_version.lifecycles.bump.get_semver_tags") as mock_tags,
+        ):
+            mock_log.return_value = []
+            mock_tags.return_value = []
+            assert bump(config, "1.0.0-rc.0") == "1.0.0"
+
     def test_updates_bump_files(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         config = self._setup_config(tmp_path)

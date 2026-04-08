@@ -67,11 +67,17 @@ def _increment_version(
 ) -> semver.Version:
     match release_type:
         case "major":
-            return v.bump_major()
+            if v.minor != 0 or v.patch != 0 or v.prerelease is None:
+                return v.bump_major()
+            return semver.Version(v.major, 0, 0)
         case "minor":
-            return v.bump_minor()
+            if v.patch != 0 or v.prerelease is None:
+                return v.bump_minor()
+            return semver.Version(v.major, v.minor, 0)
         case "patch":
-            return v.bump_patch()
+            if v.prerelease is None:
+                return v.bump_patch()
+            return semver.Version(v.major, v.minor, v.patch)
         case "premajor":
             bumped = v.bump_major()
             return semver.Version(bumped.major, bumped.minor, bumped.patch, f"{prerelease_id}.0")
