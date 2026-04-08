@@ -1,4 +1,6 @@
 import json
+import os
+import re
 import subprocess
 import uuid
 
@@ -133,3 +135,24 @@ class TestGitIntegration:
         config.release_as = "major"
         commit_and_tag_version(config)
         assert _get_package_version(git_repo_with_package) == "2.0.0"
+
+    def test_dry_run_output_is_parseable_in_non_tty_context(
+        self, git_repo_with_package, monkeypatch
+    ):
+        monkeypatch.chdir(git_repo_with_package)
+        _make_commit(git_repo_with_package, "feat: new feature")
+        env = {k: v for k, v in os.environ.items() if k not in ("FORCE_COLOR",)}
+        env["NO_COLOR"] = "1"
+        result = subprocess.run(
+            ["commit-and-tag-version", "--dry-run"],
+            cwd=git_repo_with_package,
+            capture_output=True,
+            text=True,
+            env=env,
+            check=True,
+        )
+        combined = result.stdout + result.stderr
+        assert "\x1b[" not in combined
+        match = re.search(r"to ([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.]+)?)", combined)
+        assert match is not None
+        assert match.group(1) == "1.1.0"
