@@ -11,9 +11,30 @@ from commit_and_tag_version.updaters import resolve_updater_object
 
 _updated_configs: dict[str, bool] = {}
 
+_TYPE_LIST: tuple[str, ...] = ("patch", "minor", "major")
+
 
 def get_updated_configs() -> dict[str, bool]:
     return dict(_updated_configs)
+
+
+def _get_current_active_type(current_version: str) -> str | None:
+    v = semver.Version.parse(current_version)
+    if v.patch:
+        return "patch"
+    if v.minor:
+        return "minor"
+    if v.major:
+        return "major"
+    return None
+
+
+def _get_type_priority(release_type: str) -> int:
+    return _TYPE_LIST.index(release_type)
+
+
+def _should_continue_prerelease(current_version: str, expected_type: str) -> bool:
+    return _get_current_active_type(current_version) == expected_type
 
 
 def _get_release_type(prerelease: str | None, expected_type: str, current_version: str) -> str:
@@ -22,7 +43,13 @@ def _get_release_type(prerelease: str | None, expected_type: str, current_versio
 
     v = semver.Version.parse(current_version)
     if v.prerelease is not None:
-        return "prerelease"
+        active = _get_current_active_type(current_version)
+        if _should_continue_prerelease(current_version, expected_type) or (
+            active is not None
+            and expected_type in _TYPE_LIST
+            and _get_type_priority(active) > _get_type_priority(expected_type)
+        ):
+            return "prerelease"
 
     match expected_type:
         case "major":
